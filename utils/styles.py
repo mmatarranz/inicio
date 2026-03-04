@@ -58,4 +58,4 @@ def apply_custom_styles():
             background: #484f58;
         }
         </style>
-    """, unsafe_allow_stdio=True)
+    """, unsafe_allow_html=True)
