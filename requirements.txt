@@ -1,0 +1,8 @@
+streamlit
+streamlit-authenticator
+python-dotenv
+requests
+yfinance
+pandas
+plotly
+feedparser
