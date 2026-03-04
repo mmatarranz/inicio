@@ -70,12 +70,12 @@ with st.sidebar:
     st.subheader("🚀 Mis Aplicaciones")
     vps_base = f"http://{os.getenv('VPS_IP', '212.227.104.207')}"
     
-    # List of apps based on previous work
+    # List of apps with specific user-provided URLs
     apps = [
-        {"name": "📝 QuizMaster", "url": f"{vps_base}:8001"},
-        {"name": "🚗 Mantenimiento Vehículos", "url": f"{vps_base}:8002"},
-        {"name": "📊 Dashboard Financiero", "url": f"{vps_base}:8003"},
-        {"name": "📂 Gestión Documental V3", "url": f"{vps_base}:8004"}
+        {"name": "📝 QUIZ", "url": "http://212.227.104.207/"},
+        {"name": "🚗 VOLVO (Mantenimiento)", "url": "http://v84cks44c8wg0c0g4oc48sk8.212.227.104.207.sslip.io/pages/dashboard.php"},
+        {"name": "📂 HISTÓRICO (Documental)", "url": "http://k84sgso8wgkgkow4kookkowg.212.227.104.207.sslip.io/"},
+        {"name": "📊 FINANCIERO", "url": "http://k8c4co8gw8ggoco0w0w0w8kg.212.227.104.207.sslip.io/"}
     ]
     
     for app in apps:
