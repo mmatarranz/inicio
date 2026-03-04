@@ -65,6 +65,29 @@ with st.sidebar:
         
         if not all(os.getenv(v) for v in required_vars):
             st.info("Añade las variables faltantes en la pestaña 'Environment Variables' de tu proyecto en Coolify.")
+            
+    st.markdown("---")
+    st.subheader("🚀 Mis Aplicaciones")
+    vps_base = f"http://{os.getenv('VPS_IP', '212.227.104.207')}"
+    
+    # List of apps based on previous work
+    apps = [
+        {"name": "📝 QuizMaster", "url": f"{vps_base}:8001"},
+        {"name": "🚗 Mantenimiento Vehículos", "url": f"{vps_base}:8002"},
+        {"name": "📊 Dashboard Financiero", "url": f"{vps_base}:8003"},
+        {"name": "📂 Gestión Documental V3", "url": f"{vps_base}:8004"}
+    ]
+    
+    for app in apps:
+        st.markdown(f"""
+        <div style="margin-bottom: 10px;">
+            <a href="{app['url']}" target="_blank" style="text-decoration: none;">
+                <button style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; cursor: pointer; text-align: left;">
+                    {app['name']}
+                </a>
+            </button>
+        </div>
+        """, unsafe_allow_html=True)
 
 # Header
 col_title, col_refresh = st.columns([0.8, 0.2])
