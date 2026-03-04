@@ -19,7 +19,7 @@ config = {
         "usernames": {
             os.getenv("ADMIN_USER", "Miguel"): {
                 "name": "Miguel",
-                "password": stauth.Hasher([os.getenv("ADMIN_PASS", "$Navacedon26&Az")]).generate()[0]
+                "password": stauth.Hasher([os.getenv("ADMIN_PASS", "Miguel_Navacedon26_Az")]).generate()[0]
             }
         }
     },
