@@ -6,9 +6,8 @@ from yaml.loader import SafeLoader
 from dotenv import load_dotenv
 from utils.styles import apply_custom_styles
 from services.github_service import get_latest_repos, check_vps_health
-from services.finance_service import get_market_data, get_realtime_price, create_stock_chart, get_spanish_stocks
+from services.finance_service import get_realtime_price, get_spanish_stocks
 from services.news_service import get_tech_news_es, get_economic_news_es
-from services.mail_service import get_inbox_summary
 
 # Load config
 load_dotenv()
@@ -101,123 +100,107 @@ with col_refresh:
         st.rerun()
 
 # Layout
-col1, col2 = st.columns(2)
+col_left, col_right = st.columns([0.45, 0.55], gap="large")
 
-# --- Módulo GitHub & Infraestructura ---
-with col1:
-    st.subheader("💻 GitHub & Infraestructura")
+# --- Left Column: Tech & Infra ---
+with col_left:
+    st.markdown("### 🛠️ Infraestructura")
     
-    # VPS Status
+    # VPS Status Card
     vps_ip = os.getenv("VPS_IP", "212.227.104.207")
-    health = check_vps_health(vps_ip)
+    vps_status = check_vps_health(vps_ip)
+    status_color = "#238636" if vps_status.get("status") == "Healthy" else "#da3633"
     
     st.markdown(f"""
-    <div class="card">
-        <h4>Status VPS ({vps_ip})</h4>
-        <p>Overall Status: <b>{'🟢 ONLINE' if health['status'] == 'Healthy' else '🔴 UNREACHABLE'}</b></p>
-        <p>Port 80: {'✅' if health['details'].get(80) == 'Online' else '❌'}</p>
-        <p>Port 443: {'✅' if health['details'].get(443) == 'Online' else '❌'}</p>
+    <div class="card" style="border-left: 5px solid {status_color};">
+        <small style="color: #8b949e; text-transform: uppercase;">Estado del VPS</small><br>
+        <span style="font-size: 1.2rem; font-weight: 600; color: #e6edf3;">{vps_ip}</span><br>
+        <span style="color: {status_color}; font-size: 0.9rem;">● {'OPERATIVO' if vps_status.get('status') == 'Healthy' else 'INALCANZABLE'}</span>
     </div>
     """, unsafe_allow_html=True)
     
     # GitHub Repos
+    st.markdown("#### 🐙 Repositorios Recientes")
     repos = get_latest_repos(5)
-    st.markdown("#### Últimos 5 Repositorios Activos")
     if isinstance(repos, list):
         for repo in repos:
             st.markdown(f"""
-            <div class="card">
-                <a href="{repo['url']}" target="_blank" style="text-decoration: none; color: #58a6ff;">
-                    <b>{repo['name']}</b>
+            <div class="card" style="padding: 15px; margin-bottom: 10px;">
+                <a href="{repo['url']}" target="_blank" style="text-decoration: none; color: #58a6ff; font-weight: 600; font-size: 1rem;">
+                    {repo['name']}
                 </a><br>
-                <small>Language: {repo['language'] or 'N/A'} | Updated: {repo['pushed_at'][:10]}</small>
+                <small style="color: #8b949e;">{repo['language'] or 'Python'} • {repo['pushed_at'][:10]}</small>
             </div>
             """, unsafe_allow_html=True)
-    else:
-        st.error(f"GitHub Error: {repos.get('error')}")
 
-# --- Módulo Financiero ---
-with col2:
-    st.subheader("📊 Mercados (España & Global)")
+# --- Right Column: Finance ---
+with col_right:
+    st.markdown("### 📈 Mercados Españoles")
     
-    # Financial Row 1: BTC & IBEX
+    # Financial Row 1: IBEX & BTC
     fcol1, fcol2 = st.columns(2)
     with fcol1:
-        btc_data = get_realtime_price("BTC-USD")
-        if btc_data:
-            st.metric("BTC-USD", f"${btc_data['price']:,.2f}")
-    with fcol2:
         ibex_data = get_realtime_price("^IBEX")
         if ibex_data:
             st.metric("IBEX 35", f"{ibex_data['price']:,.2f}")
+    with fcol2:
+        btc_data = get_realtime_price("BTC-USD")
+        if btc_data:
+            st.metric("Bitcoin (USD)", f"${btc_data['price']:,.2f}")
 
-    # Spanish Stocks Summary
-    st.markdown("#### Cotizaciones IBEX & Oro")
+    # Spanish Stocks Grid
+    st.markdown("#### Cotizaciones Selectas & Oro")
     spanish_stocks = get_spanish_stocks()
     scol1, scol2 = st.columns(2)
     
-    # Split list for two columns
     items = list(spanish_stocks.items())
     for i, (name, data) in enumerate(items):
         target_col = scol1 if i % 2 == 0 else scol2
         with target_col:
             st.markdown(f"""
-            <div class="card" style="padding: 10px; margin-bottom: 10px;">
-                <small>{name}</small><br>
-                <b>{data['price']:,.2f}</b>
+            <div class="card" style="padding: 18px; margin-bottom: 12px; text-align: center;">
+                <div style="color: #8b949e; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">{name}</div>
+                <div style="font-size: 1.4rem; font-weight: 600; color: #e6edf3; margin-top: 5px;">{data['price']:,.2f}</div>
             </div>
             """, unsafe_allow_html=True)
-    
-    # S&P 500 Chart (Main Reference)
-    sp500_df = get_market_data("^GSPC")
-    if sp500_df is not None:
-        fig = create_stock_chart(sp500_df, "S&P 500 (Referencia Global)")
-        st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("___")
-col3, col4 = st.columns(2)
 
-# --- Módulo de Información ---
-with col3:
-    tab_tech, tab_eco = st.tabs(["💻 Tecnología (Xataka)", "📈 Economía (Expansión)"])
-    
-    with tab_tech:
-        news_tech = get_tech_news_es(4)
-        if isinstance(news_tech, list):
-            for item in news_tech:
-                st.markdown(f"""
-                <div class="card">
-                    <a href="{item['link']}" target="_blank" style="text-decoration: none; color: #ffffff;">
-                        <b>{item['title']}</b>
-                    </a>
-                </div>
-                """, unsafe_allow_html=True)
-    
-    with tab_eco:
-        news_eco = get_economic_news_es(4)
-        if isinstance(news_eco, list):
-            for item in news_eco:
-                st.markdown(f"""
-                <div class="card">
-                    <a href="{item['link']}" target="_blank" style="text-decoration: none; color: #ffffff;">
-                        <b>{item['title']}</b>
-                    </a>
-                </div>
-                """, unsafe_allow_html=True)
+# --- Bottom: News Full Width ---
+st.markdown("### 📰 Actualidad y Economía")
+tab_tech, tab_eco = st.tabs(["💻 Tecnología (Xataka)", "📉 Economía (Expansión)"])
 
-# --- Módulo de Comunicación ---
-with col4:
-    st.subheader("📧 Inbox Summary")
-    emails = get_inbox_summary(3)
-    if isinstance(emails, list):
-        for email in emails:
-            st.markdown(f"""
-            <div class="card">
-                <b>From:</b> {email['from']}<br>
-                <b>Subject:</b> {email['subject']}
-            </div>
-            """, unsafe_allow_html=True)
-    elif "error" in emails:
-        st.info("Configura las credenciales IMAP para ver tu bandeja de entrada.")
-    else:
-        st.warning("No se encontraron correos recientes.")
+with tab_tech:
+    news_tech = get_tech_news_es(6)
+    if isinstance(news_tech, list):
+        # Create a cleaner grid for news
+        for i in range(0, len(news_tech), 3):
+            cols = st.columns(3)
+            for j in range(3):
+                if i + j < len(news_tech):
+                    item = news_tech[i+j]
+                    with cols[j]:
+                        st.markdown(f"""
+                        <div class="card" style="height: 120px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px;">
+                            <a href="{item['link']}" target="_blank" style="text-decoration: none; color: #e6edf3; font-weight: 400; font-size: 0.9rem; line-height: 1.4;">
+                                {item['title']}
+                            </a>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+with tab_eco:
+    news_eco = get_economic_news_es(6)
+    if isinstance(news_eco, list):
+        for i in range(0, len(news_eco), 3):
+            cols = st.columns(3)
+            for j in range(3):
+                if i + j < len(news_eco):
+                    item = news_eco[i+j]
+                    with cols[j]:
+                        st.markdown(f"""
+                        <div class="card" style="height: 120px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px;">
+                            <a href="{item['link']}" target="_blank" style="text-decoration: none; color: #e6edf3; font-weight: 400; font-size: 0.9rem; line-height: 1.4;">
+                                {item['title']}
+                            </a>
+                        </div>
+                        """, unsafe_allow_html=True)
