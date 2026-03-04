@@ -6,8 +6,8 @@ from yaml.loader import SafeLoader
 from dotenv import load_dotenv
 from utils.styles import apply_custom_styles
 from services.github_service import get_latest_repos, check_vps_health
-from services.finance_service import get_market_data, get_realtime_price, create_stock_chart
-from services.news_service import get_tech_news
+from services.finance_service import get_market_data, get_realtime_price, create_stock_chart, get_spanish_stocks
+from services.news_service import get_tech_news_es, get_economic_news_es
 from services.mail_service import get_inbox_summary
 
 # Load config
@@ -115,40 +115,72 @@ with col1:
 
 # --- Módulo Financiero ---
 with col2:
-    st.subheader("📊 Módulo Financiero")
+    st.subheader("📊 Mercados (España & Global)")
     
-    # BTC Price
-    btc_data = get_realtime_price("BTC-USD")
-    if btc_data:
-        st.metric("BTC-USD (Bitcoin)", f"${btc_data['price']:,.2f}")
+    # Financial Row 1: BTC & IBEX
+    fcol1, fcol2 = st.columns(2)
+    with fcol1:
+        btc_data = get_realtime_price("BTC-USD")
+        if btc_data:
+            st.metric("BTC-USD", f"${btc_data['price']:,.2f}")
+    with fcol2:
+        ibex_data = get_realtime_price("^IBEX")
+        if ibex_data:
+            st.metric("IBEX 35", f"{ibex_data['price']:,.2f}")
+
+    # Spanish Stocks Summary
+    st.markdown("#### Cotizaciones IBEX & Oro")
+    spanish_stocks = get_spanish_stocks()
+    scol1, scol2 = st.columns(2)
     
-    # S&P 500 Chart
+    # Split list for two columns
+    items = list(spanish_stocks.items())
+    for i, (name, data) in enumerate(items):
+        target_col = scol1 if i % 2 == 0 else scol2
+        with target_col:
+            st.markdown(f"""
+            <div class="card" style="padding: 10px; margin-bottom: 10px;">
+                <small>{name}</small><br>
+                <b>{data['price']:,.2f}</b>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # S&P 500 Chart (Main Reference)
     sp500_df = get_market_data("^GSPC")
     if sp500_df is not None:
-        fig = create_stock_chart(sp500_df, "S&P 500 Performance (1 Month)")
+        fig = create_stock_chart(sp500_df, "S&P 500 (Referencia Global)")
         st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning("No se pudo cargar los datos del S&P 500")
 
 st.markdown("___")
 col3, col4 = st.columns(2)
 
 # --- Módulo de Información ---
 with col3:
-    st.subheader("📰 Tech News")
-    news = get_tech_news(3)
-    if isinstance(news, list):
-        for item in news:
-            st.markdown(f"""
-            <div class="card">
-                <a href="{item['link']}" target="_blank" style="text-decoration: none; color: #ffffff;">
-                    <b>{item['title']}</b>
-                </a><br>
-                <small>Source: {item['source']}</small>
-            </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.error(f"News Error: {news.get('error')}")
+    tab_tech, tab_eco = st.tabs(["💻 Tecnología (Xataka)", "📈 Economía (Expansión)"])
+    
+    with tab_tech:
+        news_tech = get_tech_news_es(4)
+        if isinstance(news_tech, list):
+            for item in news_tech:
+                st.markdown(f"""
+                <div class="card">
+                    <a href="{item['link']}" target="_blank" style="text-decoration: none; color: #ffffff;">
+                        <b>{item['title']}</b>
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
+    
+    with tab_eco:
+        news_eco = get_economic_news_es(4)
+        if isinstance(news_eco, list):
+            for item in news_eco:
+                st.markdown(f"""
+                <div class="card">
+                    <a href="{item['link']}" target="_blank" style="text-decoration: none; color: #ffffff;">
+                        <b>{item['title']}</b>
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
 
 # --- Módulo de Comunicación ---
 with col4:

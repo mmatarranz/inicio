@@ -17,13 +17,30 @@ def get_realtime_price(symbol="BTC-USD"):
     """Fetch real-time price for a given symbol."""
     try:
         ticker = yfinance.Ticker(symbol)
+        # Use fast_info for more reliable real-time data
         data = ticker.fast_info
         return {
             "price": data.last_price,
-            "change": data.year_high - data.year_low # Placeholder for actual change calculation if needed
+            "change": data.day_change if hasattr(data, 'day_change') else 0
         }
     except Exception:
         return None
+
+def get_spanish_stocks():
+    """Fetch real-time prices for specific Spanish stocks."""
+    stocks = {
+        "Banco Santander": "SAN.MC",
+        "Indra": "IDR.MC",
+        "Repsol": "REP.MC",
+        "PUIG Brands": "PUIG.MC",
+        "Oro": "GC=F"
+    }
+    results = {}
+    for name, symbol in stocks.items():
+        price_data = get_realtime_price(symbol)
+        if price_data:
+            results[name] = price_data
+    return results
 
 def create_stock_chart(df, title="S&P 500 Performance"):
     """Create a Plotly line chart for market performance."""
