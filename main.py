@@ -53,7 +53,18 @@ elif authentication_status is None:
 
 # --- Authenticated App ---
 with st.sidebar:
-    authenticator.logout('Logout', 'main')
+    st.subheader(f"Bienvenido, {name}")
+    authenticator.logout('Cerrar Sesión', 'main')
+    
+    st.markdown("---")
+    with st.expander("🛠️ Estado de Configuración"):
+        required_vars = ["GITHUB_TOKEN", "VPS_IP", "IMAP_SERVER", "IMAP_USER", "IMAP_PASS"]
+        for var in required_vars:
+            exists = os.getenv(var) is not None
+            st.write(f"{'✅' if exists else '❌'} {var}")
+        
+        if not all(os.getenv(v) for v in required_vars):
+            st.info("Añade las variables faltantes en la pestaña 'Environment Variables' de tu proyecto en Coolify.")
 
 # Header
 col_title, col_refresh = st.columns([0.8, 0.2])
